@@ -4,8 +4,15 @@ from datetime import datetime, timedelta
 from repository.database import engine, SessionLocal, get_db
 from repository.models import Base, Submission as SubmissionModel
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://neetcode.io"],
+    allow_methods=["POST", "GET"],
+    allow_headers=["Content-Type"],
+)
 Base.metadata.create_all(bind=engine)
 
 class Submission(BaseModel):
