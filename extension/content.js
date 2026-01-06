@@ -7,38 +7,165 @@ function if_sentence_exists() {
     const all_paragraphs = document.querySelectorAll('p');
     return Array.from(all_paragraphs).some(paragraph => paragraph.textContent.trim() === target_sentence);
 }
+function show_difficulty_modal() {
+    const overlay = document.createElement("div");
+    overlay.id = "difficulty-overlay";
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.7); z-index: 9998;
+    `;
+    const modal = document.createElement("div");
+    modal.id = "difficulty-modal";
+    modal.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background-color: #1a1a1a; padding: 24px; border-radius: 8px;
+        z-index: 9999; color: white; font-family: system-ui, sans-serif;
+        width: 400px; text-align: center;
+    `;
+    const title = document.createElement("h2");
+    title.textContent = "How difficult was this problem?";
+    title.style.cssText = `margin-bottom: 20px; font-size: 18px;`;
+    // Slider container with tick marks
+    const sliderContainer = document.createElement("div");
+    sliderContainer.style.cssText = `position: relative; width: 100%; padding: 10px 0 30px 0;`;
 
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "1";
+    slider.max = "5";
+    slider.value = "3";
+    slider.step = "1";
+    slider.style.cssText = `
+        width: 100%; margin: 10px 0; cursor: pointer;
+        -webkit-appearance: none; appearance: none;
+        background: linear-gradient(to right, #48c78e 0%, #48c78e 50%, #444 50%, #444 100%);
+        height: 6px; border-radius: 3px;
+    `;
+
+    // Tick marks container
+    const ticksContainer = document.createElement("div");
+    ticksContainer.style.cssText = `
+        display: flex; justify-content: space-between;
+        position: absolute; width: 100%; bottom: 5px;
+        padding: 0 2px; box-sizing: border-box;
+    `;
+
+    // Create tick marks with numbers 1-5
+    for (let i = 1; i <= 5; i++) {
+        const tick = document.createElement("div");
+        tick.style.cssText = `
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; user-select: none;
+        `;
+        const tickMark = document.createElement("div");
+        tickMark.style.cssText = `
+            width: 2px; height: 8px; background: #666; margin-bottom: 4px;
+        `;
+        const tickLabel = document.createElement("span");
+        tickLabel.textContent = i;
+        tickLabel.style.cssText = `font-size: 12px; color: #888;`;
+        tick.appendChild(tickMark);
+        tick.appendChild(tickLabel);
+        tick.addEventListener("click", () => {
+            slider.value = i;
+            slider.dispatchEvent(new Event("input"));
+        });
+        ticksContainer.appendChild(tick);
+    }
+
+    sliderContainer.appendChild(slider);
+    sliderContainer.appendChild(ticksContainer);
+
+    const descriptions = {
+        1: "Trivial: Easily recognized pattern, solution came effortless",
+        2: "Easy: Recognized the approach, minor implementation effort/syntax errors",
+        3: "Medium: Needed some thought, but solved within reasonable time",
+        4: "Hard: Struggled significantly, either barely solved it or needed to look at solution",
+        5: "No clue: No chance of solving within 30 minutes",
+    };
+
+    const difficultyDisplay = document.createElement("div");
+    difficultyDisplay.style.cssText = `font-size: 24px; font-weight: bold; color: #48c78e; margin: 5px 0;`;
+    difficultyDisplay.textContent = "3 / 5";
+
+    const description = document.createElement("p");
+    description.textContent = descriptions[3];
+    description.style.cssText = `font-size: 14px; color: #aaa; margin: 10px 0; min-height: 42px;`;
+
+    // Update slider background gradient based on value
+    const updateSlider = () => {
+        const val = slider.value;
+        const percent = ((val - 1) / 4) * 100;
+        slider.style.background = `linear-gradient(to right, #48c78e 0%, #48c78e ${percent}%, #444 ${percent}%, #444 100%)`;
+        difficultyDisplay.textContent = `${val} / 5`;
+        description.textContent = descriptions[val];
+    };
+
+    slider.addEventListener("input", updateSlider);
+    const buttonContainer = document.createElement("div");
+    buttonContainer.style.cssText = `display: flex; gap: 10px; justify-content: center; margin-top: 20px;`;
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.style.cssText = `
+        padding: 8px 20px; border: 1px solid #444; background: transparent;
+        color: white; border-radius: 4px; cursor: pointer;
+    `;
+    const submitBtn = document.createElement("button");
+    submitBtn.textContent = "Submit";
+    submitBtn.style.cssText = `
+        padding: 8px 20px; border: none; background: #48c78e;
+        color: white; border-radius: 4px; cursor: pointer;
+    `;
+    cancelBtn.addEventListener("click", () => {
+        document.body.removeChild(overlay);
+        document.body.removeChild(modal);
+    });
+
+    submitBtn.addEventListener("click", () => {
+        const difficulty = parseInt(slider.value);
+        document.body.removeChild(overlay);
+        document.body.removeChild(modal);
+        const url = 'http://127.0.0.1:8000/submit';
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+            body: JSON.stringify({ problem: current_problem, difficulty: difficulty})
+        })
+        has_handled_submission = true;
+        console.log("Success detected for:", current_problem, "Difficulty:", difficulty);
+        console.log("Submitting:", current_problem, "Difficulty:", difficulty);
+    });
+
+    overlay.addEventListener("click", () => {
+        document.body.removeChild(overlay);
+        document.body.removeChild(modal);
+    });
+
+    // Assemble and append
+    buttonContainer.appendChild(cancelBtn);
+    buttonContainer.appendChild(submitBtn);
+    modal.appendChild(title);
+    modal.appendChild(sliderContainer);
+    modal.appendChild(difficultyDisplay);
+    modal.appendChild(description);
+    modal.appendChild(buttonContainer);
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+}
 function handleMutation(mutations) {
    let new_problem = document.querySelector("app-prompt .question-tab .flex-container-row > h1")?.textContent.trim();
    if (new_problem && new_problem != current_problem) {
         has_handled_submission = false;
         current_problem = new_problem;
    }
-   if (!has_handled_submission) {
-    if (if_sentence_exists()) {
-        let user_difficulty;
-        while (true) {
-            let raw_input = prompt("Enter a value (1-5) representing how difficult that problem was where 1 = Trivia and 5 = No clue: ") 
-
-            if (raw_input === null || raw_input.trim() === "") {
-                user_difficulty = 3;
-                alert("Using default difficulty: 3");
-                break;
-            } 
-
-            let num = Number(raw_input);
-
-            if (!isNaN(num) && Number.isInteger(num) && num >= 1 && num <= 5) {
-                user_difficulty = num;
-                break;
-            }
-            alert("Invalid input. Please enter a whole number between 1 and 5")
+    if (!has_handled_submission) {
+        if (if_sentence_exists()) {
+            has_handled_submission = true;
+            show_difficulty_modal();
         }
-        has_handled_submission = true;
-        console.log("Success detected for:", current_problem, "Difficulty:", user_difficulty);
-    }
-   }
-    
+    } 
 }
 
 const observer = new MutationObserver(handleMutation);
