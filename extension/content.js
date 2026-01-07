@@ -3,6 +3,41 @@ let current_problem = null;
 
 const target_sentence = 'You have successfully completed this problem!';
 
+function showToast(message, type = "success") {
+    const toast = document.createElement("div");
+    toast.style.cssText = `
+        position: fixed; bottom: 20px; right: 20px; z-index: 10000;
+        padding: 16px 24px; border-radius: 8px; font-family: system-ui, sans-serif;
+        font-size: 14px; color: white; max-width: 400px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+        background-color: ${type === "success" ? "#48c78e" : "#f14668"};
+    `;
+    toast.textContent = message;
+
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = "slideOut 0.3s ease-in forwards";
+        setTimeout(() => {
+            if (toast.parentNode) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
+    }, 4000);
+}
+
 function if_sentence_exists() {
     const all_paragraphs = document.querySelectorAll('p');
     return Array.from(all_paragraphs).some(paragraph => paragraph.textContent.trim() === target_sentence);
@@ -25,7 +60,6 @@ function show_difficulty_modal() {
     const title = document.createElement("h2");
     title.textContent = "How difficult was this problem?";
     title.style.cssText = `margin-bottom: 20px; font-size: 18px;`;
-    // Slider container with tick marks
     const sliderContainer = document.createElement("div");
     sliderContainer.style.cssText = `position: relative; width: 100%; padding: 10px 0 30px 0;`;
 
@@ -42,7 +76,6 @@ function show_difficulty_modal() {
         height: 6px; border-radius: 3px;
     `;
 
-    // Tick marks container
     const ticksContainer = document.createElement("div");
     ticksContainer.style.cssText = `
         display: flex; justify-content: space-between;
@@ -50,7 +83,6 @@ function show_difficulty_modal() {
         padding: 0 2px; box-sizing: border-box;
     `;
 
-    // Create tick marks with numbers 1-5
     for (let i = 1; i <= 5; i++) {
         const tick = document.createElement("div");
         tick.style.cssText = `
@@ -92,7 +124,6 @@ function show_difficulty_modal() {
     description.textContent = descriptions[3];
     description.style.cssText = `font-size: 14px; color: #aaa; margin: 10px 0; min-height: 42px;`;
 
-    // Update slider background gradient based on value
     const updateSlider = () => {
         const val = slider.value;
         const percent = ((val - 1) / 4) * 100;
@@ -123,27 +154,48 @@ function show_difficulty_modal() {
 
     submitBtn.addEventListener("click", () => {
         const difficulty = parseInt(slider.value);
-        document.body.removeChild(overlay);
-        document.body.removeChild(modal);
         const url = 'http://127.0.0.1:8000/submit';
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting...";
+        submitBtn.style.opacity = "0.7";
+        cancelBtn.disabled = true;
+
         fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-            body: JSON.stringify({ problem: current_problem, difficulty: difficulty})
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ problem: current_problem, difficulty: difficulty })
         })
-        has_handled_submission = true;
-        console.log("Success detected for:", current_problem, "Difficulty:", difficulty);
-        console.log("Submitting:", current_problem, "Difficulty:", difficulty);
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.body.removeChild(overlay);
+                document.body.removeChild(modal);
+                has_handled_submission = true;
+                showToast(data, "success");
+                console.log("Successfully submitted:", current_problem, "Difficulty:", difficulty);
+            })
+            .catch(error => {
+                document.body.removeChild(overlay);
+                document.body.removeChild(modal);
+                has_handled_submission = true;
+                const errorMessage = error.message.includes("Failed to fetch")
+                    ? "Failed to submit - is the server running?"
+                    : `Failed to submit: ${error.message}`;
+                showToast(errorMessage, "error");
+                console.error("Submission failed:", error);
+            });
     });
 
     overlay.addEventListener("click", () => {
         document.body.removeChild(overlay);
         document.body.removeChild(modal);
     });
-
-    // Assemble and append
     buttonContainer.appendChild(cancelBtn);
     buttonContainer.appendChild(submitBtn);
     modal.appendChild(title);
@@ -155,17 +207,17 @@ function show_difficulty_modal() {
     document.body.appendChild(modal);
 }
 function handleMutation(mutations) {
-   let new_problem = document.querySelector("app-prompt .question-tab .flex-container-row > h1")?.textContent.trim();
-   if (new_problem && new_problem != current_problem) {
+    let new_problem = document.querySelector("app-prompt .question-tab .flex-container-row > h1")?.textContent.trim();
+    if (new_problem && new_problem != current_problem) {
         has_handled_submission = false;
         current_problem = new_problem;
-   }
+    }
     if (!has_handled_submission) {
         if (if_sentence_exists()) {
             has_handled_submission = true;
             show_difficulty_modal();
         }
-    } 
+    }
 }
 
 const observer = new MutationObserver(handleMutation);
