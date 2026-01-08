@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query, Depends
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
-from repository.database import engine, SessionLocal, get_db
+from repository.database import engine, get_db
 from repository.models import Base, Submission as SubmissionModel
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
