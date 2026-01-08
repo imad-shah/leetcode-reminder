@@ -5,6 +5,8 @@ from repository.database import engine, SessionLocal, get_db
 from repository.models import Base, Submission as SubmissionModel
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse 
 
 app = FastAPI()
 app.add_middleware(
@@ -13,6 +15,7 @@ app.add_middleware(
     allow_methods=["POST", "GET"],
     allow_headers=["Content-Type"],
 )
+app.mount("/static", StaticFiles(directory="static"), name="static")
 Base.metadata.create_all(bind=engine)
 
 class Submission(BaseModel):
@@ -70,3 +73,7 @@ async def get_problems(db: Session = Depends(get_db)):
 async def due_problems(limit: int = Query(default=5, ge=1, le=10), db: Session = Depends(get_db)):
     due = db.query(SubmissionModel).filter(SubmissionModel.due <= datetime.today()).order_by(SubmissionModel.due.asc()).limit(limit).all()
     return due
+
+@app.get("/")
+async def dashboard():
+    return FileResponse("static/index.html")
