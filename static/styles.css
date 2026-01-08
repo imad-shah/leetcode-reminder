@@ -1,0 +1,136 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #1a1a2e;
+    color: #eaeaea;
+    line-height: 1.6;
+    padding: 2rem;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+header {
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+#stats {
+    display: flex;
+    gap: 1.5rem;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+section {
+    margin-bottom: 2rem;
+}
+
+section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #888;
+}
+
+#due-problems {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.due-card {
+    background-color: #252542;
+    border-left: 4px solid #f14668;
+    padding: 1rem;
+    border-radius: 4px;
+    min-width: 200px;
+}
+
+.due-card .problem-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.due-card .due-date {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.more-card {
+    background-color: #1e1e38;
+    border-left-color: #888;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Problems table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #252542;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+thead {
+    background-color: #1e1e38;
+}
+
+th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #888;
+    cursor: pointer;
+}
+
+th:hover {
+    color: #eaeaea;
+}
+
+td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #1a1a2e;
+}
+
+.status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status.overdue {
+    background-color: rgba(241, 70, 104, 0.2);
+    color: #f14668;
+}
+
+.status.due-today {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.status.upcoming {
+    background-color: rgba(72, 199, 142, 0.2);
+    color: #48c78e;
+}
+
+.empty-message {
+    color: #666;
+    font-style: italic;
+}
